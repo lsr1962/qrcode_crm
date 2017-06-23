@@ -1,6 +1,7 @@
 var express = require('express');
 var schedule = require('node-schedule');
 var fse = require('fs-extra');
+var http = require('http');
 
 
 
@@ -23,7 +24,7 @@ var DB_CONN_STR = 'mongodb://localhost:27017/crmdb1';
 
 var selectData = function(collection, callback) {
   //查询数据
-  collection.find({current:{'$gt':0}}).sort({"current":-1}).toArray(function(err, result) {
+  collection.find().sort({"current":-1}).toArray(function(err, result) {
     if(err)
     {
       console.log('Error:'+ err);
@@ -69,31 +70,37 @@ app.get('/getNamelist', function (req, res) {
   });
 })
 var getRank = function () {
-  MongoClient.connect(DB_CONN_STR, function(err, db) {
-    var ids = [{id:'1'},{id:'2'},{id:'3'},{id:'4'},{id:'5'},{id:'6'},{id:'14'},{id:'15'},{id:'26'}];
-    var names = fse.readJsonSync('./name.json').name;
-    names.forEach(function (names) {
-      var count = 0;
-      ids.forEach(function (ids) {
-        if((parseInt(ids.id) >= parseInt(names.start)) && (parseInt(ids.id) <= parseInt(names.end))){
-          count++;
-        }
-      })
-      names.current = count;
-    })
-    var tb1 = db.collection('tb1');
-    deleteData(tb1, function(result) {
-      //console.log(result);
-      insertData(tb1, names, function(result) {
-        console.log(result);
-        db.close();
-        console.log("获取数据" + new Date());
+  http.get('http://s.jlxmt.cn/cgi-bin/merchant/get.html',function (res) {
+    res.setEncoding('utf8');
+    res.on('data', function (idGroup){
+      idGroup = JSON.parse(idGroup);
+      MongoClient.connect(DB_CONN_STR, function(err, db) {
+        var names = fse.readJsonSync('./name.json').name;
+        names.forEach(function (names) {
+          var count = 0;
+          idGroup.forEach(function (ids) {
+            if((parseInt(ids.id) >= parseInt(names.start)) && (parseInt(ids.id) <= parseInt(names.end))){
+              count++;
+            }
+          })
+          names.current = count;
+        })
+        var tb1 = db.collection('tb1');
+        deleteData(tb1, function(result) {
+          //console.log(result);
+          insertData(tb1, names, function(result) {
+            console.log(result);
+            db.close();
+            console.log("获取数据" + new Date());
+          });
+        });
       });
     });
-  });
+  })
+
 }
 getRank();
-var j = schedule.scheduleJob('*/5 * * * *', getRank);
+var j = schedule.scheduleJob('*/30 * * * *', getRank);
 
 
 console.log('> Starting dev server...')

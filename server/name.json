@@ -1,9 +1,10 @@
 {
   "name": [
-    {"name":"郑丽秋","major":"市场营销","start":"1","end":"10","current":""},
-    {"name":"吴允阳","major":"计算机科学与技术","start":"11","end":"20","current":""},
-    {"name":"邱培","major":"经济管理","start":"21","end":"30","current":""},
-    {"name":"陈树淘","major":"工商管理","start":"21","end":"30","current":""},
-    {"name":"骆书林","major":"自动化","start":"21","end":"30","current":""}
+    {"name":"孙浩茗","major":"总经理","start":"102262","end":"103159","current":""},
+    {"name":"孙丹","major":"董事长夫人","start":"102262","end":"102399","current":""},
+    {"name":"吴允阳","major":"后端开发","start":"1","end":"10","current":""},
+    {"name":"邱培","major":"市场总监","start":"1","end":"10","current":""},
+    {"name":"陈树淘","major":"产品经理","start":"102501","end":"102554","current":""},
+    {"name":"骆书林","major":"前端开发","start":"1","end":"10","current":""}
   ]
 }
