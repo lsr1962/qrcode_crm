@@ -1,4 +1,8 @@
-var express = require('express')
+var express = require('express');
+var schedule = require('node-schedule');
+var fse = require('fs-extra');
+
+
 
 // default port where dev server listens for incoming traffic
 var port = 8081
@@ -64,34 +68,33 @@ app.get('/getNamelist', function (req, res) {
     });
   });
 })
-
-
-MongoClient.connect(DB_CONN_STR, function(err, db) {
-  //console.log("连接成功！");
-  var ids = [{id:'1'},{id:'2'},{id:'3'},{id:'4'},{id:'5'},{id:'6'},{id:'14'},{id:'15'},{id:'26'}];
-  var names = [
-    {name:'骆书林',major:'自动化',start:'1',end:'10',current:''},
-    {name:'陈树淘',major:'工商管理',start:'11',end:'20',current:''},
-    {name:'吴允阳',major:'计算机科学与技术',start:'21',end:'30',current:''}
-  ];
-  names.forEach(function (names) {
-    var count = 0;
-    ids.forEach(function (ids) {
-      if((parseInt(ids.id) >= parseInt(names.start)) && (parseInt(ids.id) <= parseInt(names.end))){
-        count++;
-      }
+var getRank = function () {
+  MongoClient.connect(DB_CONN_STR, function(err, db) {
+    var ids = [{id:'1'},{id:'2'},{id:'3'},{id:'4'},{id:'5'},{id:'6'},{id:'14'},{id:'15'},{id:'26'}];
+    var names = fse.readJsonSync('./name.json').name;
+    names.forEach(function (names) {
+      var count = 0;
+      ids.forEach(function (ids) {
+        if((parseInt(ids.id) >= parseInt(names.start)) && (parseInt(ids.id) <= parseInt(names.end))){
+          count++;
+        }
+      })
+      names.current = count;
     })
-    names.current = count;
-  })
-  var tb1 = db.collection('tb1');
-  deleteData(tb1, function(result) {
-    //console.log(result);
-    insertData(tb1, names, function(result) {
-      console.log(result);
-      db.close();
+    var tb1 = db.collection('tb1');
+    deleteData(tb1, function(result) {
+      //console.log(result);
+      insertData(tb1, names, function(result) {
+        console.log(result);
+        db.close();
+        console.log("获取数据" + new Date());
+      });
     });
   });
-});
+}
+getRank();
+var j = schedule.scheduleJob('*/5 * * * *', getRank);
+
 
 console.log('> Starting dev server...')
 
