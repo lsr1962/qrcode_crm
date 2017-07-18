@@ -69,8 +69,51 @@ app.get('/getNamelist', function (req, res) {
     });
   });
 })
+http.request=(function(_request){
+  return function(options,callback){
+    var timeout=options['timeout'],
+      timeoutEventId;
+    var req=_request(options,function(res){
+      res.on('end',function(){
+        clearTimeout(timeoutEventId);
+        console.log('response end...');
+      });
+
+      res.on('close',function(){
+        clearTimeout(timeoutEventId);
+        console.log('response close...');
+      });
+
+      res.on('abort',function(){
+        console.log('abort...');
+      });
+
+      callback(res);
+    });
+
+    //超时
+    req.on('timeout',function(){
+      req.res && req.res.abort();
+      req.abort();
+    });
+
+    //如果存在超时
+    timeout && (timeoutEventId=setTimeout(function(){
+      req.emit('timeout',{message:'have been timeout...'});
+    },timeout));
+    return req;
+  };
+
+})(http.request)
 var getRank = function () {
-  http.get('http://s.jlxmt.cn/cgi-bin/merchant/get.html',function (res) {
+  var options = {
+    host: 's.jlxmt.cn',
+    port: 80,
+    method: 'GET',
+    path: '/cgi-bin/merchant/get.html',
+    timeout:5000
+  };
+  var req = http.request(options, function (res) {
     res.setEncoding('utf8');
     res.on('data', function (idGroup){
       idGroup = JSON.parse(idGroup);
@@ -97,7 +140,12 @@ var getRank = function () {
       });
     });
   })
-
+  req.on('error',function(e){
+    console.log("error got :"+e.message);
+  }).on('timeout',function(e){
+    console.log('timeout got :'+e.message);
+  });
+  req.end();
 }
 getRank();
 var j = schedule.scheduleJob('*/30 * * * *', getRank);
